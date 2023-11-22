@@ -5,14 +5,15 @@
 #include "key.h"
 #include "Serial.h"
 #include "LED.h"
+#include "dht11.h" 	
 // mock
 uint8_t currentTemp = 90;
 uint8_t currentHumi = 50;
-uint8_t isOpenPerson = 1;  // 1¿ªÆô 0²»¿ªÆô
+uint8_t isOpenPerson = 1;  // 1ï¿½ï¿½ï¿½ï¿½ 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 uint16_t currentSmoke = 500;
 uint8_t hasPerson = 0;
 
-// ãÐÖµ
+// ï¿½ï¿½Öµ
 uint8_t MaxTemp = 80;
 uint8_t MinTemp = 20;
 uint8_t MaxHumi = 80;
@@ -23,7 +24,7 @@ uint8_t t = 0;
 uint8_t setn = 1;
 uint8_t isFirstShow = 1;
 
-// ÉèÖÃÒ³Ãæ ×Ö¿âÏÂ±ê
+// ï¿½ï¿½ï¿½ï¿½Ò³ï¿½ï¿½ ï¿½Ö¿ï¿½ï¿½Â±ï¿½
 typedef enum SetTypeFontIndex
 {
     SENSOR_TEMP = 15,
@@ -31,7 +32,7 @@ typedef enum SetTypeFontIndex
     SENSOR_SMOKE = 23
 } SetTypeFontIndex;
 
-// ÊÇ·ñÔÚãÐÖµÄÚ
+// ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½
 typedef struct IsInRange
 {
     u8 inMaxTempRange;
@@ -48,7 +49,8 @@ void showMainPage(void);
 void setSensorVal(void);
 void handleKeyClick(void);
 IsInRange inRange(void);
-void handleAbnormal();
+void handleAbnormal(void);
+void getSensorVal(void);
 int main(void)
 {
     KEY_Init();
@@ -56,9 +58,11 @@ int main(void)
     delay_init();
     OLED_Init();
 		LED_Init();
+		while(DHT11_Init()){}	
     while (1)
     {
         OLED_Refresh();
+				getSensorVal();
         if (isFirstShow)
         {
             showMainPage();
@@ -77,14 +81,20 @@ void showMainPage(void)
 {
     OLED_Clear();
     uint8_t i;
-    for (i = 0; i < 2; i++)  OLED_ShowChinese(i * 16 + 5, 0, i, 16, 1); // ÎÂ¶È
-    for (i = 0; i < 2; i++)  OLED_ShowChinese((i + 2) * 16 + 5 + 10, 0, i + 2, 16, 1); // Êª¶È
-    for (i = 0; i < 2; i++)  OLED_ShowChinese((i + 4) * 16 + 5 + 20, 0, i + 4, 16, 1); //ÈËÌå
-    OLED_ShowChinese(5 + 16, 16, 10, 16, 1); // ÉãÊÏ¶È
-    for (i = 0; i < 2; i++)  OLED_ShowChinese(i * 16 + 5, 16 * 2, i + 8, 16, 1); // ÑÌÎí
+    for (i = 0; i < 2; i++)  OLED_ShowChinese(i * 16 + 5, 0, i, 16, 1); // ï¿½Â¶ï¿½
+    for (i = 0; i < 2; i++)  OLED_ShowChinese((i + 2) * 16 + 5 + 10, 0, i + 2, 16, 1); // Êªï¿½ï¿½
+    for (i = 0; i < 2; i++)  OLED_ShowChinese((i + 4) * 16 + 5 + 20, 0, i + 4, 16, 1); //ï¿½ï¿½ï¿½ï¿½
+    OLED_ShowChinese(5 + 16, 16, 10, 16, 1); // ï¿½ï¿½ï¿½Ï¶ï¿½
+    for (i = 0; i < 2; i++)  OLED_ShowChinese(i * 16 + 5, 16 * 2, i + 8, 16, 1); // ï¿½ï¿½ï¿½ï¿½
     OLED_ShowString(5 + 16 * 2, 16 * 2, ": ", 16, 1);
     setSensorVal();
 }
+void getSensorVal(){
+		DHT11_Read_Data(&currentTemp,&currentHumi);	
+		Serial_Printf("temp: %d", currentTemp);
+		Serial_Printf("humi: %d", currentHumi);
+} 
+
 void setSensorVal(void)
 {
     if (setn == 1)
@@ -92,17 +102,17 @@ void setSensorVal(void)
         uint8_t i;
         char humiArr[4];
         char smokeArr[7];
-        OLED_ShowNum(5, 16, currentTemp, 2, 16, 1); // ÎÂ¶ÈÖµ
+        OLED_ShowNum(5, 16, currentTemp, 2, 16, 1); // ï¿½Â¶ï¿½Öµ
         sprintf(humiArr, "%d%%", currentHumi);
         sprintf(smokeArr, "%dppm", currentSmoke);
-        //OLED_ShowNum(2*16+5+10,16,currentHumi,2,16,1);  // Êª¶ÈÖµ
+        //OLED_ShowNum(2*16+5+10,16,currentHumi,2,16,1);  // Êªï¿½ï¿½Öµ
         OLED_ShowString(2 * 16 + 5 + 10, 16, (u8 *)humiArr, 16, 1);
-        OLED_ShowChinese(4 * 16 + 5 + 20 + 8, 16, isOpenPerson == 1 ? 6 : 7, 16, 1); //  ÈËÌå¼ì²â¿ª¹Ø
-        //OLED_ShowNum(5+16*3,16*2,currentSmoke,3,16,1); // ÑÌÎíÖµ
+        OLED_ShowChinese(4 * 16 + 5 + 20 + 8, 16, isOpenPerson == 1 ? 6 : 7, 16, 1); //  ï¿½ï¿½ï¿½ï¿½ï¿½â¿ªï¿½ï¿½
+        //OLED_ShowNum(5+16*3,16*2,currentSmoke,3,16,1); // ï¿½ï¿½ï¿½ï¿½Öµ
         OLED_ShowString(5 + 16 * 3, 16 * 2, (u8 *)smokeArr, 16, 1);
         if (hasPerson)
         {
-            for (i = 0; i < 4; i++)  OLED_ShowChinese(i * 16 + 5, 16 * 3, i + 11, 16, 1); // ¼ì²âµ½ÈË
+            for (i = 0; i < 4; i++)  OLED_ShowChinese(i * 16 + 5, 16 * 3, i + 11, 16, 1); // ï¿½ï¿½âµ½ï¿½ï¿½
         }
         else
         {
@@ -112,41 +122,41 @@ void setSensorVal(void)
     else if (setn == 2 || setn == 3)
     {
 
-        OLED_ShowNum(16 * 3 + 5, 16 + 8,  MaxTemp, 2, 16, setn - 2); // ÎÂ¶ÈÉÏÏÞÏÔÊ¾
-        OLED_ShowNum(16 * 3 + 5, 16 * 2 + 8 + 8,  MinTemp, 2, 16,  setn - 3); // ÏÂÏÞÏÔÊ¾
+        OLED_ShowNum(16 * 3 + 5, 16 + 8,  MaxTemp, 2, 16, setn - 2); // ï¿½Â¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾
+        OLED_ShowNum(16 * 3 + 5, 16 * 2 + 8 + 8,  MinTemp, 2, 16,  setn - 3); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾
     }
     else if (setn == 4 || setn == 5)
     {
-        OLED_ShowNum(16 * 3 + 5, 16 + 8,  MaxHumi, 2, 16, setn - 4); // Êª¶ÈÉÏÏÞÏÔÊ¾
-        OLED_ShowNum(16 * 3 + 5, 16 * 2 + 8 + 8,  MinHumi, 2, 16, setn - 5); // ÏÂÏÞÏÔÊ¾
+        OLED_ShowNum(16 * 3 + 5, 16 + 8,  MaxHumi, 2, 16, setn - 4); // Êªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾
+        OLED_ShowNum(16 * 3 + 5, 16 * 2 + 8 + 8,  MinHumi, 2, 16, setn - 5); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾
     }
     else
     {
         char smokeStr[7];
-        sprintf(smokeStr, "%dppm", MaxSmoke); // ÑÌÎí+µ¥Î»
-        OLED_ShowString(16 * 3 + 5, 16  + 8, (u8 *)smokeStr,  16, 0); // ÑÌÎíÉÏÏÞÏÔÊ¾
+        sprintf(smokeStr, "%dppm", MaxSmoke); // ï¿½ï¿½ï¿½ï¿½+ï¿½ï¿½Î»
+        OLED_ShowString(16 * 3 + 5, 16  + 8, (u8 *)smokeStr,  16, 0); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾
     }
 
 }
 
 
-// ¼¸¸öÉèÖÃÒ³ÃæÖÐÎÄ²¼¾Ö
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò³ï¿½ï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½
 void setSensorPage(SetTypeFontIndex type)
 {
     u8 i;
     OLED_Clear();
-    for (i = 0; i < 4; i++)OLED_ShowChinese(i * 16 + 32, 0, i + type, 16, 1); //ÏÔÊ¾ÖÐÎÄ£º¡°ÉèÖÃÎÂ¶È¡¢Êª¶È¡¢ÑÌÎí¡±
-    for (i = 0; i < 2; i++)OLED_ShowChinese(i * 16 + 5, 16 + 8, i + 27, 16, 1); //ÏÔÊ¾ÖÐÎÄ£º¡°ÉÏÏÞ¡±
+    for (i = 0; i < 4; i++)OLED_ShowChinese(i * 16 + 32, 0, i + type, 16, 1); //ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¶È¡ï¿½Êªï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    for (i = 0; i < 2; i++)OLED_ShowChinese(i * 16 + 5, 16 + 8, i + 27, 16, 1); //ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¡ï¿½
     OLED_ShowString(5 + 32, 16 + 8, (u8 *)": ", 16, 1);
     if (type != SENSOR_SMOKE)
     {
-        for (i = 0; i < 2; i++)OLED_ShowChinese(i * 16 + 5, 16 * 2 + 8 + 8, i + 29, 16, 1); //ÏÔÊ¾ÖÐÎÄ£º¡°ÏÂÏÞ¡±
+        for (i = 0; i < 2; i++)OLED_ShowChinese(i * 16 + 5, 16 * 2 + 8 + 8, i + 29, 16, 1); //ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¡ï¿½
         OLED_ShowString(5 + 32, 16 * 2 + 8 + 8, (u8 *)": ", 16, 1);
     }
     if (type == SENSOR_TEMP)
     {
-        OLED_ShowChinese(5 + 16 * 4, 16 + 8, 10, 16, 1); // ¡æ
-        OLED_ShowChinese(5 + 16 * 4,  16 * 2 + 8 + 8, 10, 16, 1); // ¡æ
+        OLED_ShowChinese(5 + 16 * 4, 16 + 8, 10, 16, 1); // ï¿½ï¿½
+        OLED_ShowChinese(5 + 16 * 4,  16 * 2 + 8 + 8, 10, 16, 1); // ï¿½ï¿½
     }
     if (type == SENSOR_HUMI)
     {
@@ -160,7 +170,7 @@ uint8_t pageArr[6] = {NULL, SENSOR_TEMP, SENSOR_TEMP, SENSOR_HUMI, SENSOR_HUMI, 
 void handleKeyClick()
 {
 
-    t = KEY_Scan(0);    //µÃµ½¼üÖµ
+    t = KEY_Scan(0);    //ï¿½Ãµï¿½ï¿½ï¿½Öµ
     if (t == KEY0_PRES)
     {
         setn++;
@@ -177,11 +187,11 @@ void handleKeyClick()
     if (t == KEY1_PRES || t == KEY2_PRES)
     {
        
-        if (setn == 2 && MaxTemp > 0)  t == KEY1_PRES ? MaxTemp++ : MaxTemp--; // µ÷ÕûÎÂ¶ÈÉÏÏÞ
-        if (setn == 3 && MinTemp < MaxTemp)  t == KEY1_PRES ? MinTemp++ : MinTemp--; // µ÷ÕûÎÂ¶ÈÏÂÏÞ
-        if (setn == 4 && MaxHumi)  t == KEY1_PRES ? MaxHumi++ : MaxHumi--; // µ÷ÕûÊª¶ÈÉÏÏÞ
-        if (setn == 5 && MinHumi < MaxHumi)  t == KEY1_PRES ? MinHumi++ : MinHumi--; // µ÷ÕûÊª¶ÈÏÂÏÞ
-        if (setn == 6 && MaxSmoke > 0)  t == KEY1_PRES ? MaxSmoke++ : MaxSmoke--; // µ÷ÕûÑÌÎíÉÏÏÞ
+        if (setn == 2 && MaxTemp > 0)  t == KEY1_PRES ? MaxTemp++ : MaxTemp--; // ï¿½ï¿½ï¿½ï¿½ï¿½Â¶ï¿½ï¿½ï¿½ï¿½ï¿½
+        if (setn == 3 && MinTemp < MaxTemp)  t == KEY1_PRES ? MinTemp++ : MinTemp--; // ï¿½ï¿½ï¿½ï¿½ï¿½Â¶ï¿½ï¿½ï¿½ï¿½ï¿½
+        if (setn == 4 && MaxHumi)  t == KEY1_PRES ? MaxHumi++ : MaxHumi--; // ï¿½ï¿½ï¿½ï¿½Êªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        if (setn == 5 && MinHumi < MaxHumi)  t == KEY1_PRES ? MinHumi++ : MinHumi--; // ï¿½ï¿½ï¿½ï¿½Êªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        if (setn == 6 && MaxSmoke > 0)  t == KEY1_PRES ? MaxSmoke++ : MaxSmoke--; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     }
     if (t == KEY3_PRES)
     {
@@ -191,7 +201,7 @@ void handleKeyClick()
     }
 		setSensorVal();
 }
-// ³¬¹ýãÐÖµ´¦Àíº¯Êý
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 void handleAbnormal()
 {
     u8 i;
@@ -199,23 +209,23 @@ void handleAbnormal()
     static u8 isBlink = 1;
     isBlink = !isBlink;
     IsInRange judge = inRange();
-    if (count++ < 20) return;  // ÉÁË¸¼ä¸ôÑÓÊ±
+    if (count++ < 20) return;  // ï¿½ï¿½Ë¸ï¿½ï¿½ï¿½ï¿½ï¿½Ê±
     count = 0;
     // OLED
     (!judge.hasNoPerson || !judge.inMaxHumiRange || !judge.inMaxSmokeRange || !judge.inMaxTempRange || !judge.inMaxTempRange || !judge.inMinHumiRange) ? LED1_ON() : LED1_OFF();
-    // *ÉÁË¸
+    // *ï¿½ï¿½Ë¸
     OLED_ShowString(5 + 16 + 16, 16, ((!judge.inMaxTempRange || !judge.inMinTempRange) && isBlink) ? (u8 *)"*" : (u8 *)" ", 16, 1); //*
     OLED_ShowString(47 + 32, 16, ((!judge.inMaxHumiRange || !judge.inMinHumiRange) && isBlink) ? (u8 *)"*" : (u8 *)" ", 16, 1); //*
     if (hasPerson && isBlink)
     {
-        for (i = 0; i < 4; i++)OLED_ShowChinese(i * 16 + 5, 3 * 16, i + 11,16, 1) ; // ¼ì²âµ½ÈË
+        for (i = 0; i < 4; i++)OLED_ShowChinese(i * 16 + 5, 3 * 16, i + 11,16, 1) ; // ï¿½ï¿½âµ½ï¿½ï¿½
     }
     else
     {
-        OLED_ShowString(5, 3 * 16, (u8 *)"        ", 16, 1);  // Çå¿Õ
+        OLED_ShowString(5, 3 * 16, (u8 *)"        ", 16, 1);  // ï¿½ï¿½ï¿½
     }
 }
-// ãÐÖµÅÐ¶Ï
+// ï¿½ï¿½Öµï¿½Ð¶ï¿½
 IsInRange inRange(void)
 {
     // c99

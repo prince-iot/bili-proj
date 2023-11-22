@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "e:/Desktop",
-      "program": "e:/Desktop/build/Debug/outDebug",
+      "cwd": "e:/Desktop/bili-proj/HARDWARE/DHT11",
+      "program": "e:/Desktop/bili-proj/HARDWARE/DHT11/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
