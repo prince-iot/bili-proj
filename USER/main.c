@@ -6,6 +6,9 @@
 #include "Serial.h"
 #include "LED.h"
 #include "dht11.h" 	
+#include "adc.h"
+#include "math.h"
+ #include "stm32f10x_adc.h"
 // mock
 uint8_t currentTemp = 90;
 uint8_t currentHumi = 50;
@@ -58,6 +61,7 @@ int main(void)
     delay_init();
     OLED_Init();
 		LED_Init();
+	 	Adc_Init();		  		//ADC初始化
 		while(DHT11_Init()){}	
     while (1)
     {
@@ -91,8 +95,9 @@ void showMainPage(void)
 }
 void getSensorVal(){
 		DHT11_Read_Data(&currentTemp,&currentHumi);	
-		Serial_Printf("temp: %d", currentTemp);
-		Serial_Printf("humi: %d", currentHumi);
+		u16 adcx=Get_Adc_Average(ADC_Channel_9,5);
+		float temp = (float)adcx*3.3/4096;
+		currentSmoke =floor(pow(11.5428*35.904*temp/(25.5-5.1*temp),0.6549));
 } 
 
 void setSensorVal(void)
@@ -169,7 +174,6 @@ void setSensorPage(SetTypeFontIndex type)
 uint8_t pageArr[6] = {NULL, SENSOR_TEMP, SENSOR_TEMP, SENSOR_HUMI, SENSOR_HUMI, SENSOR_SMOKE};
 void handleKeyClick()
 {
-
     t = KEY_Scan(0);    //�õ���ֵ
     if (t == KEY0_PRES)
     {
