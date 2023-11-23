@@ -1,3 +1,4 @@
+#include <math.h>
 #include "delay.h"
 #include "sys.h"
 #include "oled.h"
@@ -5,7 +6,8 @@
 #include "key.h"
 #include "Serial.h"
 #include "LED.h"
-#include "dht11.h" 	
+#include "dht11.h"
+#include "adc.h"
 // mock
 uint8_t currentTemp = 90;
 uint8_t currentHumi = 50;
@@ -57,22 +59,24 @@ int main(void)
     Serial_Init();
     delay_init();
     OLED_Init();
-		LED_Init();
-		while(DHT11_Init()){}	
+    Adc_Init();
+    LED_Init();
+    while (DHT11_Init()) {}
     while (1)
     {
         OLED_Refresh();
-				getSensorVal();
+        getSensorVal();
         if (isFirstShow)
         {
             showMainPage();
             isFirstShow = 0;
         }
         handleKeyClick();
-				if(setn==1){
-					handleAbnormal();
-				}
-			
+        if (setn == 1)
+        {
+            handleAbnormal();
+        }
+
     }
 
 }
@@ -89,11 +93,15 @@ void showMainPage(void)
     OLED_ShowString(5 + 16 * 2, 16 * 2, ": ", 16, 1);
     setSensorVal();
 }
-void getSensorVal(){
-		DHT11_Read_Data(&currentTemp,&currentHumi);	
-		Serial_Printf("temp: %d", currentTemp);
-		Serial_Printf("humi: %d", currentHumi);
-} 
+void getSensorVal()
+{
+    DHT11_Read_Data(&currentTemp, &currentHumi);
+   // Serial_Printf("temp: %d", currentTemp);
+   //Serial_Printf("humi: %d", currentHumi);
+	uint16_t adcx=Get_Adc_Average(ADC_Channel_9,10);
+	currentSmoke=adcx*((10000-300)/4096)+300;
+	
+}
 
 void setSensorVal(void)
 {
@@ -186,7 +194,7 @@ void handleKeyClick()
     }
     if (t == KEY1_PRES || t == KEY2_PRES)
     {
-       
+
         if (setn == 2 && MaxTemp > 0)  t == KEY1_PRES ? MaxTemp++ : MaxTemp--; // �����¶�����
         if (setn == 3 && MinTemp < MaxTemp)  t == KEY1_PRES ? MinTemp++ : MinTemp--; // �����¶�����
         if (setn == 4 && MaxHumi)  t == KEY1_PRES ? MaxHumi++ : MaxHumi--; // ����ʪ������
@@ -195,11 +203,11 @@ void handleKeyClick()
     }
     if (t == KEY3_PRES)
     {
-     
+
         isOpenPerson = !isOpenPerson;
 
     }
-		setSensorVal();
+    setSensorVal();
 }
 // ������ֵ��������
 void handleAbnormal()
@@ -218,7 +226,7 @@ void handleAbnormal()
     OLED_ShowString(47 + 32, 16, ((!judge.inMaxHumiRange || !judge.inMinHumiRange) && isBlink) ? (u8 *)"*" : (u8 *)" ", 16, 1); //*
     if (hasPerson && isBlink)
     {
-        for (i = 0; i < 4; i++)OLED_ShowChinese(i * 16 + 5, 3 * 16, i + 11,16, 1) ; // ��⵽��
+        for (i = 0; i < 4; i++)OLED_ShowChinese(i * 16 + 5, 3 * 16, i + 11, 16, 1) ; // ��⵽��
     }
     else
     {
@@ -238,9 +246,9 @@ IsInRange inRange(void)
         .inMaxSmokeRange = currentSmoke <= MaxSmoke,
         .hasNoPerson = !hasPerson
     };
-		
-	//	Serial_SendNumber(currentSmoke,3);
-	//	Serial_SendNumber(MaxSmoke,3);
+
+    //  Serial_SendNumber(currentSmoke,3);
+    //  Serial_SendNumber(MaxSmoke,3);
     return judge;
 }
 
