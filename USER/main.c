@@ -8,6 +8,7 @@
 #include "LED.h"
 #include "dht11.h"
 #include "adc.h"
+#include "SR501.h"
 // mock
 uint8_t currentTemp = 90;
 uint8_t currentHumi = 50;
@@ -61,6 +62,7 @@ int main(void)
     OLED_Init();
     Adc_Init();
     LED_Init();
+    SR501_Init();
     while (DHT11_Init()) {}
     while (1)
     {
@@ -96,11 +98,12 @@ void showMainPage(void)
 void getSensorVal()
 {
     DHT11_Read_Data(&currentTemp, &currentHumi);
-   // Serial_Printf("temp: %d", currentTemp);
-   //Serial_Printf("humi: %d", currentHumi);
-	uint16_t adcx=Get_Adc_Average(ADC_Channel_9,10);
-	currentSmoke=adcx*((10000-300)/4096)+300;
-	
+    // Serial_Printf("temp: %d", currentTemp);
+    //Serial_Printf("humi: %d", currentHumi);
+    uint16_t adcx = Get_Adc_Average(ADC_Channel_9, 10);
+    currentSmoke = adcx * ((10000 - 300) / 4096) + 300;
+    hasPerson = SR501;
+	Serial_Printf("%d", hasPerson);
 }
 
 void setSensorVal(void)
@@ -118,7 +121,7 @@ void setSensorVal(void)
         OLED_ShowChinese(4 * 16 + 5 + 20 + 8, 16, isOpenPerson == 1 ? 6 : 7, 16, 1); //  �����⿪��
         //OLED_ShowNum(5+16*3,16*2,currentSmoke,3,16,1); // ����ֵ
         OLED_ShowString(5 + 16 * 3, 16 * 2, (u8 *)smokeArr, 16, 1);
-        if (hasPerson)
+        if (hasPerson && isOpenPerson)
         {
             for (i = 0; i < 4; i++)  OLED_ShowChinese(i * 16 + 5, 16 * 3, i + 11, 16, 1); // ��⵽��
         }
