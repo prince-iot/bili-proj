@@ -2,7 +2,7 @@
 #define __SR501_H
 #include "sys.h"
 
-#define SR501  GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_9)//读取按键0
+#define SR501  GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_9)
 
-void SR501_Init(void);//IO初始化
+void SR501_Init(void);//IO锟斤拷始锟斤拷
 #endif
