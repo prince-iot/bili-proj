@@ -9,16 +9,17 @@
 #include "dht11.h"
 #include "adc.h"
 #include "SR501.h"
+#include "Motor.h"
 // mock
-uint8_t currentTemp = 90;
-uint8_t currentHumi = 50;
+uint8_t currentTemp = 0;
+uint8_t currentHumi = 0;
 uint8_t isOpenPerson = 1;  // 1���� 0������
-uint16_t currentSmoke = 500;
+uint16_t currentSmoke = 0;
 uint8_t hasPerson = 0;
 
 // ��ֵ
-uint8_t MaxTemp = 80;
-uint8_t MinTemp = 20;
+uint8_t MaxTemp = 18;
+uint8_t MinTemp = 10;
 uint8_t MaxHumi = 80;
 uint8_t MinHumi = 20;
 uint16_t MaxSmoke = 600;
@@ -63,6 +64,7 @@ int main(void)
     Adc_Init();
     LED_Init();
     SR501_Init();
+    Motor_Init();
     while (DHT11_Init()) {}
     while (1)
     {
@@ -103,7 +105,7 @@ void getSensorVal()
     uint16_t adcx = Get_Adc_Average(ADC_Channel_9, 10);
     currentSmoke = adcx * ((10000 - 300) / 4096) + 300;
     hasPerson = SR501;
-	Serial_Printf("%d", hasPerson);
+    Serial_Printf("%d", hasPerson);
 }
 
 void setSensorVal(void)
@@ -224,6 +226,16 @@ void handleAbnormal()
     count = 0;
     // OLED
     (!judge.hasNoPerson || !judge.inMaxHumiRange || !judge.inMaxSmokeRange || !judge.inMaxTempRange || !judge.inMaxTempRange || !judge.inMinHumiRange) ? LED1_ON() : LED1_OFF();
+    if (judge.inMaxTempRange)
+    {
+
+        Motor_SetSpeed(0);
+    }
+    else
+    {
+        Motor_SetSpeed(50);
+    }
+
     // *��˸
     OLED_ShowString(5 + 16 + 16, 16, ((!judge.inMaxTempRange || !judge.inMinTempRange) && isBlink) ? (u8 *)"*" : (u8 *)" ", 16, 1); //*
     OLED_ShowString(47 + 32, 16, ((!judge.inMaxHumiRange || !judge.inMinHumiRange) && isBlink) ? (u8 *)"*" : (u8 *)" ", 16, 1); //*
