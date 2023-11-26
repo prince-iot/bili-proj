@@ -10,6 +10,9 @@
 #include "adc.h"
 #include "SR501.h"
 #include "Motor.h"
+#include "esp8266.h"
+#include "serve.h"
+#include "protocol.h"
 // mock
 uint8_t currentTemp = 0;
 uint8_t currentHumi = 0;
@@ -27,6 +30,15 @@ uint16_t MaxSmoke = 600;
 uint8_t t = 0;
 uint8_t setn = 1;
 uint8_t isFirstShow = 1;
+
+
+const char *devSubTopic[] = {"/k0hfv4sYShN/PrinceIot_Device/user/get"}; //订阅主题
+const char devPubTopic[] = "/k0hfv4sYShN/PrinceIot_Device/user/update"; //发布主题
+
+unsigned short timeCount = 0;   //发送间隔变量
+unsigned short timeCount_date = 0;  //发送间隔变量
+unsigned char *dataPtr = NULL;  //esp8266正常运作检查指针
+extern char PUB_BUF1[256];
 
 // ����ҳ�� �ֿ��±�
 typedef enum SetTypeFontIndex
@@ -55,6 +67,8 @@ void handleKeyClick(void);
 IsInRange inRange(void);
 void handleAbnormal(void);
 void getSensorVal(void);
+void net_task(void) ;
+
 int main(void)
 {
     KEY_Init();
@@ -65,6 +79,10 @@ int main(void)
     LED_Init();
     SR501_Init();
     Motor_Init();
+    usart3_init(115200);
+    ESP8266_Init();
+    while (AliNet_DevLink())           //接入Ali
+        delay_ms(500);
     while (DHT11_Init()) {}
     while (1)
     {
@@ -80,11 +98,31 @@ int main(void)
         {
             handleAbnormal();
         }
-
+        net_task();
     }
 
 }
+//物联网控制函数，向服务器发送数据、接收互联网数据控制外设
+void net_task(void)
+{
 
+    timeCount++;
+    timeCount_date++;
+    if (timeCount_date % 50 == 0)
+    {
+        //向缓冲区PUB_BUF1中写入温度数据
+        sprintf(PUB_BUF1, "{\"params\":{\"temp\":%d,\"humi\":%d, \"smoke\":%d, \"hasPerson\":%d},\"method\":\"thing.event.property.post\"}", currentTemp, currentHumi, currentSmoke, hasPerson); //发布数据格式
+        //向服务器发布缓冲区PUB_BUF1信息，即发布湿度、温度值
+        AliNet_Publish("/sys/k0hfv4sYShN/PrinceIot_Device/thing/event/property/post", PUB_BUF1);
+        timeCount_date = 0;
+    }
+    if (++timeCount >= 5000)                                //发送间隔
+    {
+        AliNet_Ping();      //保活，否则可能会连接中断
+        timeCount = 0;
+    }
+
+}
 void showMainPage(void)
 {
     OLED_Clear();
