@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\STM32F10x_FWLib\inc;..\USER;..\HARDWARE\OLED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\KEY;..\HARDWARE\Serial;..\HARDWARE\LED;..\HARDWARE\DHT11;..\HARDWARE\ADC;..\HARDWARE\SR501;..\HARDWARE\Motor;..\HARDWARE\PWM</IncludePath>
+              <IncludePath>..\CORE;..\STM32F10x_FWLib\inc;..\USER;..\HARDWARE\OLED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\KEY;..\HARDWARE\Serial;..\HARDWARE\LED;..\HARDWARE\DHT11;..\HARDWARE\ADC;..\HARDWARE\SR501;..\HARDWARE\Motor;..\HARDWARE\PWM;..\NET\ESP8266;..\SYSTEM\usart;..\NET\JSON;..\NET\ESP8266;..\NET\cJSON;..\NET\Protocol;..\NET\Serve;..\NET</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -695,6 +695,11 @@
               <FileType>1</FileType>
               <FilePath>..\SYSTEM\sys\sys.c</FilePath>
             </File>
+            <File>
+              <FileName>usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\SYSTEM\usart\usart.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -714,6 +719,31 @@
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\main.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>NET</GroupName>
+          <Files>
+            <File>
+              <FileName>esp8266.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\NET\ESP8266\esp8266.c</FilePath>
+            </File>
+            <File>
+              <FileName>cJSON.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\NET\cJSON\cJSON.c</FilePath>
+            </File>
+            <File>
+              <FileName>protocol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\NET\Protocol\protocol.c</FilePath>
+            </File>
+            <File>
+              <FileName>serve.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\NET\Serve\serve.c</FilePath>
             </File>
           </Files>
         </Group>

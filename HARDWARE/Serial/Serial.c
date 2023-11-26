@@ -87,11 +87,11 @@ void Serial_SendNumber(uint32_t Number, uint8_t Length)
 	}
 }
 
-int fputc(int ch, FILE *f)
-{
-	Serial_SendByte(ch);
-	return ch;
-}
+//int fputc(int ch, FILE *f)
+//{
+//	Serial_SendByte(ch);
+//	return ch;
+//}
 
 void Serial_Printf(char *format, ...)
 {
@@ -103,44 +103,44 @@ void Serial_Printf(char *format, ...)
 	Serial_SendString(String);
 }
 
-void USART1_IRQHandler(void)
-{
-	static uint8_t RxState = 0;
-	static uint8_t pRxPacket = 0;
-	if (USART_GetITStatus(USART1, USART_IT_RXNE) == SET)
-	{
-		uint8_t RxData = USART_ReceiveData(USART1);
-		
-		if (RxState == 0)
-		{
-			if (RxData == '@' && Serial_RxFlag == 0)
-			{
-				RxState = 1;
-				pRxPacket = 0;
-			}
-		}
-		else if (RxState == 1)
-		{
-			if (RxData == '\r')
-			{
-				RxState = 2;
-			}
-			else
-			{
-				Serial_RxPacket[pRxPacket] = RxData;
-				pRxPacket ++;
-			}
-		}
-		else if (RxState == 2)
-		{
-			if (RxData == '\n')
-			{
-				RxState = 0;
-				Serial_RxPacket[pRxPacket] = '\0';
-				Serial_RxFlag = 1;
-			}
-		}
-		
-		USART_ClearITPendingBit(USART1, USART_IT_RXNE);
-	}
-}
+//void USART1_IRQHandler(void)
+//{
+//	static uint8_t RxState = 0;
+//	static uint8_t pRxPacket = 0;
+//	if (USART_GetITStatus(USART1, USART_IT_RXNE) == SET)
+//	{
+//		uint8_t RxData = USART_ReceiveData(USART1);
+//		
+//		if (RxState == 0)
+//		{
+//			if (RxData == '@' && Serial_RxFlag == 0)
+//			{
+//				RxState = 1;
+//				pRxPacket = 0;
+//			}
+//		}
+//		else if (RxState == 1)
+//		{
+//			if (RxData == '\r')
+//			{
+//				RxState = 2;
+//			}
+//			else
+//			{
+//				Serial_RxPacket[pRxPacket] = RxData;
+//				pRxPacket ++;
+//			}
+//		}
+//		else if (RxState == 2)
+//		{
+//			if (RxData == '\n')
+//			{
+//				RxState = 0;
+//				Serial_RxPacket[pRxPacket] = '\0';
+//				Serial_RxFlag = 1;
+//			}
+//		}
+//		
+//		USART_ClearITPendingBit(USART1, USART_IT_RXNE);
+//	}
+//}
