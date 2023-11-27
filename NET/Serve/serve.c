@@ -10,9 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "cJSON.h"
-/*
-	onenet云服务器平台
-*/
+
 #define PROID		"PrinceIot_Device&k0hfv4sYShN"//阿里云设备名称
 
 #define AUTH_INFO	"99EC5224DC4782482E491C2FA0EB68610079BBB8"//阿里云设备密码
@@ -27,17 +25,17 @@ extern u8 alarmFlag;//是否报警的标志
 extern u8 alarm_is_free;
 
 //==========================================================
-//	函数名称：	OneNet_DevLink
+//	函数名称：	Ali_DevLink
 //
-//	函数功能：	与onenet创建连接
+//	函数功能：	与Ali创建连接
 //
 //	入口参数：	无
 //
 //	返回参数：	1-成功	0-失败
 //
-//	说明：		与onenet平台建立连接
+//	说明：		与Ali平台建立连接
 //==========================================================
-_Bool OneNet_DevLink(void)
+_Bool Ali_DevLink(void)
 {
 	
 	MQTT_PACKET_STRUCTURE mqttPacket = {NULL, 0, 0, 0};					//协议包
@@ -46,7 +44,7 @@ _Bool OneNet_DevLink(void)
 	
 	_Bool status = 1;
 	
-	printf( "OneNet_DevLink\r\n"
+	printf( "Ali_DevLink\r\n"
 							"PROID: %s,	AUIF: %s,	DEVID:%s\r\n"
                         , PROID, AUTH_INFO, DEVID);
 	
@@ -83,7 +81,7 @@ _Bool OneNet_DevLink(void)
 }
 
 //==========================================================
-//	函数名称：	OneNet_Subscribe
+//	函数名称：	Ali_Subscribe
 //
 //	函数功能：	订阅
 //
@@ -94,7 +92,7 @@ _Bool OneNet_DevLink(void)
 //
 //	说明：		
 //==========================================================
-void OneNet_Subscribe(const char *topics[], unsigned char topic_cnt)
+void Ali_Subscribe(const char *topics[], unsigned char topic_cnt)
 {
 	
 	unsigned char i = 0;
@@ -114,7 +112,7 @@ void OneNet_Subscribe(const char *topics[], unsigned char topic_cnt)
 }
 
 //==========================================================
-//	函数名称：	OneNet_Ping
+//	函数名称：	AliNet_Ping
 //
 //	函数功能：	保活
 //
@@ -124,7 +122,7 @@ void OneNet_Subscribe(const char *topics[], unsigned char topic_cnt)
 //
 //	说明：		
 //==========================================================
-void OneNet_Ping(void)
+void AliNet_Ping(void)
 {
 	
 	MQTT_PACKET_STRUCTURE mqttPacket = {NULL, 0, 0, 0};							//协议包
@@ -143,7 +141,7 @@ void OneNet_Ping(void)
 
 
 //==========================================================
-//	函数名称：	OneNet_Publish
+//	函数名称：	Ali_Publish
 //
 //	函数功能：	发布消息
 //
@@ -154,7 +152,7 @@ void OneNet_Ping(void)
 //
 //	说明：		
 //==========================================================
-void OneNet_Publish(const char *topic, const char *msg)
+void Ali_Publish(const char *topic, const char *msg)
 {
 
 	MQTT_PACKET_STRUCTURE mqttPacket = {NULL, 0, 0, 0};							//协议包
@@ -171,7 +169,7 @@ void OneNet_Publish(const char *topic, const char *msg)
 }
 
 //==========================================================
-//	函数名称：	OneNet_RevPro
+//	函数名称：	Ali_RevPro
 //
 //	函数功能：	平台返回数据检测
 //
@@ -181,7 +179,7 @@ void OneNet_Publish(const char *topic, const char *msg)
 //
 //	说明：		
 //==========================================================
-void OneNet_RevPro(unsigned char *cmd)
+void Ali_RevPro(unsigned char *cmd)
 {
 	
 	MQTT_PACKET_STRUCTURE mqttPacket = {NULL, 0, 0, 0};								//协议包
@@ -235,16 +233,16 @@ void OneNet_RevPro(unsigned char *cmd)
 					printf("json_value: [%s]\n",json_value->valuestring);
 					if(strstr(json_value->valuestring,"led0 on") != NULL)    //控制打开LED0
 					{
-				
-						OneNet_Publish("/k0hfv4sYShN/PrinceIot_Device/user/update","{\"esp8266\":\"LED_0 ON\"}");  //更新发布LED0状态
+					
+						Ali_Publish("/a1o7XYqLD1A/mqttfx/user/update","{\"esp8266\":\"LED_0 ON\"}");  //更新发布LED0状态
 //						json_value = cJSON_GetObjectItem(json , "value");
 //						if(json_value->valueint)LED0 = 1;//开灯
 //						else LED0 = 0;//关灯
 					}
 					else if(strstr(json_value->valuestring,"led0 off") != NULL)
 					{
-				
-						OneNet_Publish("/k0hfv4sYShN/PrinceIot_Device/user/update","{\"esp8266\":\"LED_0 OFF\"}");
+			
+						Ali_Publish("/a1o7XYqLD1A/mqttfx/user/update","{\"esp8266\":\"LED_0 OFF\"}");
 //						json_value = cJSON_GetObjectItem(json , "value");
 //						if(json_value->valueint)alarmFlag = 1;//打开报警器
 //						else alarmFlag = 0;//关闭报警器
@@ -252,24 +250,24 @@ void OneNet_RevPro(unsigned char *cmd)
 					}
 					else if(strstr(json_value->valuestring,"led2 on") != NULL)  
 					{
-			
-						OneNet_Publish("/k0hfv4sYShN/PrinceIot_Device/user/update","{\"esp8266\":\"LED_1 ON\"}");  
+		
+						Ali_Publish("/a1o7XYqLD1A/mqttfx/user/update","{\"esp8266\":\"LED_1 ON\"}");  
 					}
 					else if(strstr(json_value->valuestring,"led2 off") != NULL)
 					{
 				
-						OneNet_Publish("/k0hfv4sYShN/PrinceIot_Device/user/update","{\"esp8266\":\"LED_1 OFF\"}");
+						Ali_Publish("/a1o7XYqLD1A/mqttfx/user/update","{\"esp8266\":\"LED_1 OFF\"}");
 					}
 				
 					else if(strstr(json_value->valuestring,"led on") != NULL)
 					{
 			
-						OneNet_Publish("/k0hfv4sYShN/PrinceIot_Device/user/update","{\"esp8266\":\"LED ON\"}");
+						Ali_Publish("/a1o7XYqLD1A/mqttfx/user/update","{\"esp8266\":\"LED ON\"}");
 					}
 					else if(strstr(json_value->valuestring,"led off") != NULL)
 					{
-		
-						OneNet_Publish("/k0hfv4sYShN/PrinceIot_Device/user/update","{\"esp8266\":\"LED OFF\"}");
+					
+						Ali_Publish("/a1o7XYqLD1A/mqttfx/user/update","{\"esp8266\":\"LED OFF\"}");
 					}
 					
 					else if(strstr(json_value->valuestring,"update") != NULL)
@@ -284,8 +282,8 @@ void OneNet_RevPro(unsigned char *cmd)
 								   数据3采集数据
 								  )
 						*/
-						sprintf(PUB_BUF1,"{\"temp\":%d,\"esp8266\":\"UPDATE OK\"}", 50);      //向缓冲区PUB_BUF1中写入湿度、温度数据
-						OneNet_Publish("/k0hfv4sYShN/PrinceIot_Device/user/update", PUB_BUF1);  //向服务器发布缓冲区PUB_BUF1信息，即发布湿度、温度值
+						sprintf(PUB_BUF1,"{\"temp\":%d,\"esp8266\":\"UPDATE OK\"}", (int)50);      //向缓冲区PUB_BUF1中写入湿度、温度数据
+						Ali_Publish("/a1o7XYqLD1A/mqttfx/user/update", PUB_BUF1);  //向服务器发布缓冲区PUB_BUF1信息，即发布湿度、温度值
 					}
 					
 //					if(json_value->valueint)//json_value > 0且为整形

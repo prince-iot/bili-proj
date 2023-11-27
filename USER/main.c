@@ -10,6 +10,7 @@
 #include "adc.h"
 #include "SR501.h"
 #include "Motor.h"
+#include "esp8266.h"
 #include "usart.h"
 #include "esp8266.h"
 #include "serve.h"
@@ -17,11 +18,11 @@
 // mock
 uint8_t currentTemp = 0;
 uint8_t currentHumi = 0;
-uint8_t isOpenPerson = 1;  // 1���� 0������
+uint8_t isOpenPerson = 1;  
 uint16_t currentSmoke = 0;
 uint8_t hasPerson = 0;
 
-// ��ֵ
+
 uint8_t MaxTemp = 18;
 uint8_t MinTemp = 10;
 uint8_t MaxHumi = 80;
@@ -31,6 +32,15 @@ uint16_t MaxSmoke = 600;
 uint8_t t = 0;
 uint8_t setn = 1;
 uint8_t isFirstShow = 1;
+
+
+const char *devSubTopic[] = {"/k0hfv4sYShN/PrinceIot_Device/user/get"};	//订阅主题
+const char devPubTopic[] = "/k0hfv4sYShN/PrinceIot_Device/user/post";	//发布主题
+
+unsigned short timeCount = 0;	//发送间隔变量
+unsigned short timeCount_date = 0;	//发送间隔变量
+unsigned char *dataPtr = NULL;  //esp8266正常运作检查指针
+extern char PUB_BUF1[256];
 
 // ����ҳ�� �ֿ��±�
 typedef enum SetTypeFontIndex
@@ -51,14 +61,7 @@ typedef struct IsInRange
     u8 hasNoPerson;
 } IsInRange;
 
-const char *devSubTopic[] = {"/k0hfv4sYShN/PrinceIot_Device/user/get"};	//订阅主题
-const char devPubTopic[] = "/k0hfv4sYShN/PrinceIot_Device/user/update";	//发布主题
 
-unsigned short timeCount = 0;	//发送间隔变量
-unsigned short timeCount_date = 0;	//发送间隔变量
-unsigned char *dataPtr = NULL;  //esp8266正常运作检查指针
-
-extern char PUB_BUF1[256];
 
 void showMainPage(void);
 void setSensorVal(void);
@@ -66,23 +69,26 @@ void handleKeyClick(void);
 IsInRange inRange(void);
 void handleAbnormal(void);
 void getSensorVal(void);
-void net_task(void);
+void net_task(void) ;
 int main(void)
 {
     KEY_Init();
-    Serial_Init();
+    // Serial_Init();
     delay_init();
     OLED_Init();
     Adc_Init();
     LED_Init();
     SR501_Init();
     Motor_Init();
-	usart3_init(115200);
-	ESP8266_Init();		
-	while(OneNet_DevLink())			//接入OneNET
-		delay_ms(500);
-	OneNet_Subscribe(devSubTopic, 1);	
+    uart_init(115200);//串口1初始化
+    uart3_init(115200);//串口3初始化
+	printf(" Hardware init OK\r\n");
+	ESP8266_Init();	
+	while(Ali_DevLink())			//接入Ali
+		delay_ms(500);	
+		Ali_Subscribe(devSubTopic, 1);
     while (DHT11_Init()) {}
+     
     while (1)
     {
         OLED_Refresh();
@@ -98,29 +104,30 @@ int main(void)
             handleAbnormal();
         }
 		net_task();
+       
     }
 
 }
 
-
-
 //物联网控制函数，向服务器发送数据、接收互联网数据控制外设
 void net_task(void) 
 {
-
+	int temp,tds,storage,voltage;
+	float ph;
+	
 		timeCount++;
 		timeCount_date++;
-		if(timeCount_date % 50 == 0)  
+		if(timeCount_date % 25 == 0)  
 		{
-			//向缓冲区PUB_BUF1中写入温度数据
-			sprintf(PUB_BUF1,"{\"params\":{\"temp\":%d,\"humi\":%d, \"smoke\":%d,\"hasPerson\": %d },\"method\":\"thing.event.property.post\"}", currentTemp,currentHumi,currentSmoke,hasPerson);    //发布数据格式
+			
+			sprintf(PUB_BUF1,"{\"params\":{\"temp\":%d,\"humi\":%d,\"smoke\":%d, \"hasPerson\":%d},\"method\":\"thing.event.property.post\"}", currentTemp,currentHumi, currentSmoke, hasPerson);    //发布数据格式
 			//向服务器发布缓冲区PUB_BUF1信息，即发布湿度、温度值
-			OneNet_Publish("/sys/k0hfv4sYShN/PrinceIot_Device/thing/event/property/post", PUB_BUF1); 
+			Ali_Publish("/sys/k0hfv4sYShN/PrinceIot_Device/thing/event/property/post", PUB_BUF1); 
 			timeCount_date = 0;
 		}
 		if(++timeCount >= 5000)									//发送间隔
 		{
-			OneNet_Ping();		//保活，否则可能会连接中断
+			AliNet_Ping();		//保活，否则可能会连接中断
 			timeCount=0; 
 		}
 	
@@ -146,8 +153,8 @@ void getSensorVal()
     uint16_t adcx = Get_Adc_Average(ADC_Channel_9, 10);
     currentSmoke = adcx * ((10000 - 300) / 4096) + 300;
     hasPerson = SR501;
-}
 
+}
 void setSensorVal(void)
 {
     if (setn == 1)

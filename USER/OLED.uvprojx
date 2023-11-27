@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\STM32F10x_FWLib\inc;..\USER;..\HARDWARE\OLED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\KEY;..\HARDWARE\Serial;..\HARDWARE\LED;..\HARDWARE\DHT11;..\HARDWARE\ADC;..\HARDWARE\SR501;..\HARDWARE\Motor;..\HARDWARE\PWM;..\NET\cJSON;..\NET\ESP8266;..\NET\Protocol;..\NET\Serve;..\NET</IncludePath>
+              <IncludePath>..\CORE;..\STM32F10x_FWLib\inc;..\USER;..\HARDWARE\OLED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\KEY;..\HARDWARE\Serial;..\HARDWARE\LED;..\HARDWARE\DHT11;..\HARDWARE\ADC;..\HARDWARE\SR501;..\HARDWARE\Motor;..\HARDWARE\PWM;..\NET\ESP8266;..\SYSTEM\usart;..\NET\JSON;..\NET\ESP8266;..\NET\cJSON;..\NET\Protocol;..\NET\Serve;..\NET</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -726,14 +726,14 @@
           <GroupName>NET</GroupName>
           <Files>
             <File>
-              <FileName>cJSON.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\NET\cJSON\cJSON.c</FilePath>
-            </File>
-            <File>
               <FileName>esp8266.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\NET\ESP8266\esp8266.c</FilePath>
+            </File>
+            <File>
+              <FileName>cJSON.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\NET\cJSON\cJSON.c</FilePath>
             </File>
             <File>
               <FileName>protocol.c</FileName>

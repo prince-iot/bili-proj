@@ -4,5 +4,5 @@
 
 #define SR501  GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_9)
 
-void SR501_Init(void);//IO³õÊ¼»¯
+void SR501_Init(void);//IOï¿½ï¿½Ê¼ï¿½ï¿½
 #endif

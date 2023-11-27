@@ -6,7 +6,7 @@
 
 #define ESP8266_WIFI_INFO		"AT+CWJAP=\"heiheihei\",\"synnnnnn\"\r\n"   //wifi账号密码
 
-#define ESP8266_ONENET_INFO		"AT+CIPSTART=\"TCP\",\"iot-06z00a2vbovrx0j.mqtt.iothub.aliyuncs.com\",1883\r\n"  //tcp服务器的IP地址和端口号
+#define ESP8266_Ali_INFO		"AT+CIPSTART=\"TCP\",\"iot-06z00a2vbovrx0j.mqtt.iothub.aliyuncs.com\",1883\r\n"  //tcp服务器的IP地址和端口号
 
 
 unsigned char esp8266_buf[128];
@@ -142,13 +142,13 @@ unsigned char *ESP8266_GetIPD(unsigned short timeOut)
 	char *ptrIPD = NULL;
 	
 	do
-	{
+	{	
 		if(ESP8266_WaitRecive() == REV_OK)								//如果接收完成
 		{
 			ptrIPD = strstr((char *)esp8266_buf, "IPD,");				//搜索“IPD”头
 			if(ptrIPD == NULL)											//如果没找到，可能是IPD头的延迟，还是需要等待一会，但不会超过设定的时间
 			{
-				printf( "\"IPD\" not found\r\n");
+				printf("\"IPD\" not found\r\n");
 			}
 			else
 			{
@@ -159,7 +159,7 @@ unsigned char *ESP8266_GetIPD(unsigned short timeOut)
 					return (unsigned char *)(ptrIPD);
 				}
 				else
-					printf( "\"IPD\" not found\r\n");
+					printf("\"IPD\" not found\r\n");
 					return NULL;
 				
 			}
@@ -185,8 +185,24 @@ unsigned char *ESP8266_GetIPD(unsigned short timeOut)
 //==========================================================
 void ESP8266_Init(void)
 {
-	
-	
+//	
+//	GPIO_InitTypeDef GPIO_Initure;
+//	
+//	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF,ENABLE);
+
+//	//ESP8266复位引脚
+//	
+//	GPIO_Initure.GPIO_Mode=GPIO_Mode_OUT;//输出
+//	GPIO_Initure.GPIO_OType=GPIO_OType_PP;  //推挽输出
+//	GPIO_Initure.GPIO_Pin = GPIO_Pin_6;					//GPIOC14-复位
+//	GPIO_Initure.GPIO_Speed = GPIO_Speed_50MHz;
+//	GPIO_Init(GPIOF, &GPIO_Initure);
+//	
+//	GPIO_WriteBit(GPIOF, GPIO_Pin_6, Bit_RESET);
+//	delay_ms(250);
+//	GPIO_WriteBit(GPIOF, GPIO_Pin_6, Bit_SET);
+//	delay_ms(500);
+//	
 	ESP8266_Clear();
 	
 	printf( "0. AT\r\n");
@@ -211,7 +227,7 @@ void ESP8266_Init(void)
 		delay_ms(500);
 	
 	printf( "5. CIPSTART\r\n");
-	while(ESP8266_SendCmd(ESP8266_ONENET_INFO, "CONNECT"))
+	while(ESP8266_SendCmd(ESP8266_Ali_INFO, "CONNECT"))
 		delay_ms(500);
 	
 	printf( "6. ESP8266 Init OK\r\n");
