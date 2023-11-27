@@ -15,6 +15,7 @@
 #include "esp8266.h"
 #include "serve.h"
 #include "protocol.h"
+#include "Store.h"
 
 typedef enum 
 {
@@ -33,23 +34,7 @@ typedef struct
     u8 hasNoPerson;
 } IsInRange;
 
-typedef struct
-{
-    uint8_t currentTemp;
-    uint8_t currentHumi;
-    uint8_t isOpenPerson ;
-    uint16_t currentSmoke ;
-    uint8_t hasPerson ;
-} CurrentVal;
 
-typedef struct
-{
-    uint8_t MaxTemp ;
-    uint8_t MinTemp;
-    uint8_t MaxHumi ;
-    uint8_t MinHumi ;
-    uint16_t MaxSmoke ;
-} Range;
 
 const char *devSubTopic[] = {"/k0hfv4sYShN/PrinceIot_Device/user/get"}; //订阅主题
 const char devPubTopic[] = "/k0hfv4sYShN/PrinceIot_Device/user/post";   //发布主题
@@ -85,6 +70,7 @@ int main(void)
     LED_Init();
     SR501_Init();
     Motor_Init();
+	getFlashVal(&range,&currentVal.isOpenPerson);
     uart_init(115200);//串口1初始化
     uart3_init(115200);//串口3初始化
     ESP8266_Init();
@@ -256,10 +242,12 @@ void handleKeyClick()
         if (setn == 4 && range.MaxHumi)  t == KEY1_PRES ? range.MaxHumi++ : range.MaxHumi--;
         if (setn == 5 && range.MinHumi < range.MaxHumi)  t == KEY1_PRES ? range.MinHumi++ : range.MinHumi--;
         if (setn == 6 && range.MaxSmoke > 0)  t == KEY1_PRES ? range.MaxSmoke++ : range.MaxSmoke--;
+		saveToFlash(&range, currentVal.isOpenPerson); // 设置值保存到flash
     }
     if (t == KEY3_PRES)
     {
         currentVal.isOpenPerson = !currentVal.isOpenPerson;
+		saveToFlash(&range, currentVal.isOpenPerson);
     }
     setSensorVal();
 }
@@ -296,6 +284,7 @@ void handleAbnormal()
         OLED_ShowString(5, 3 * 16, (u8 *)"        ", 16, 1);
     }
 }
+
 // 是否在阈值范围内
 IsInRange inRange(void)
 {
