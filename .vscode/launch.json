@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "d:/iot/项目/他人/新版OneNET/mqttdemonew/mqttdemonew/NET/ESP8266",
-      "program": "d:/iot/项目/他人/新版OneNET/mqttdemonew/mqttdemonew/NET/ESP8266/build/Debug/outDebug",
+      "cwd": "e:/Desktop/bili-proj/USER",
+      "program": "e:/Desktop/bili-proj/USER/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

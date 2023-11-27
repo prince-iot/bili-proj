@@ -15,43 +15,15 @@
 #include "esp8266.h"
 #include "serve.h"
 #include "protocol.h"
-// mock
-uint8_t currentTemp = 0;
-uint8_t currentHumi = 0;
-uint8_t isOpenPerson = 1;  
-uint16_t currentSmoke = 0;
-uint8_t hasPerson = 0;
 
-
-uint8_t MaxTemp = 18;
-uint8_t MinTemp = 10;
-uint8_t MaxHumi = 80;
-uint8_t MinHumi = 20;
-uint16_t MaxSmoke = 600;
-
-uint8_t t = 0;
-uint8_t setn = 1;
-uint8_t isFirstShow = 1;
-
-
-const char *devSubTopic[] = {"/k0hfv4sYShN/PrinceIot_Device/user/get"};	//订阅主题
-const char devPubTopic[] = "/k0hfv4sYShN/PrinceIot_Device/user/post";	//发布主题
-
-unsigned short timeCount = 0;	//发送间隔变量
-unsigned short timeCount_date = 0;	//发送间隔变量
-unsigned char *dataPtr = NULL;  //esp8266正常运作检查指针
-extern char PUB_BUF1[256];
-
-// ����ҳ�� �ֿ��±�
-typedef enum SetTypeFontIndex
+typedef enum 
 {
     SENSOR_TEMP = 15,
     SENSOR_HUMI = 19,
     SENSOR_SMOKE = 23
 } SetTypeFontIndex;
 
-// �Ƿ�����ֵ��
-typedef struct IsInRange
+typedef struct 
 {
     u8 inMaxTempRange;
     u8 inMinTempRange;
@@ -61,7 +33,37 @@ typedef struct IsInRange
     u8 hasNoPerson;
 } IsInRange;
 
+typedef struct
+{
+    uint8_t currentTemp;
+    uint8_t currentHumi;
+    uint8_t isOpenPerson ;
+    uint16_t currentSmoke ;
+    uint8_t hasPerson ;
+} CurrentVal;
 
+typedef struct
+{
+    uint8_t MaxTemp ;
+    uint8_t MinTemp;
+    uint8_t MaxHumi ;
+    uint8_t MinHumi ;
+    uint16_t MaxSmoke ;
+} Range;
+
+const char *devSubTopic[] = {"/k0hfv4sYShN/PrinceIot_Device/user/get"}; //订阅主题
+const char devPubTopic[] = "/k0hfv4sYShN/PrinceIot_Device/user/post";   //发布主题
+
+unsigned short timeCount = 0;   //发送间隔变量
+unsigned short timeCount_date = 0;  //发送间隔变量
+unsigned char *dataPtr = NULL;  //esp8266正常运作检查指针
+extern char PUB_BUF1[256];
+uint8_t t = 0;
+uint8_t setn = 1;
+uint8_t isFirstShow = 1;
+
+Range range;
+CurrentVal currentVal;
 
 void showMainPage(void);
 void setSensorVal(void);
@@ -70,10 +72,13 @@ IsInRange inRange(void);
 void handleAbnormal(void);
 void getSensorVal(void);
 void net_task(void) ;
+void initVal(void);
+
 int main(void)
 {
     KEY_Init();
     // Serial_Init();
+    initVal();
     delay_init();
     OLED_Init();
     Adc_Init();
@@ -82,13 +87,11 @@ int main(void)
     Motor_Init();
     uart_init(115200);//串口1初始化
     uart3_init(115200);//串口3初始化
-	printf(" Hardware init OK\r\n");
-	ESP8266_Init();	
-	while(Ali_DevLink())			//接入Ali
-		delay_ms(500);	
-		Ali_Subscribe(devSubTopic, 1);
+    ESP8266_Init();
+    while (Ali_DevLink())           //接入Ali
+        delay_ms(500);
+    Ali_Subscribe(devSubTopic, 1);
     while (DHT11_Init()) {}
-     
     while (1)
     {
         OLED_Refresh();
@@ -103,58 +106,66 @@ int main(void)
         {
             handleAbnormal();
         }
-		net_task();
-       
+        net_task();
     }
-
 }
-
-//物联网控制函数，向服务器发送数据、接收互联网数据控制外设
-void net_task(void) 
+void initVal(void)
 {
-	int temp,tds,storage,voltage;
-	float ph;
-	
-		timeCount++;
-		timeCount_date++;
-		if(timeCount_date % 25 == 0)  
-		{
-			
-			sprintf(PUB_BUF1,"{\"params\":{\"temp\":%d,\"humi\":%d,\"smoke\":%d, \"hasPerson\":%d},\"method\":\"thing.event.property.post\"}", currentTemp,currentHumi, currentSmoke, hasPerson);    //发布数据格式
-			//向服务器发布缓冲区PUB_BUF1信息，即发布湿度、温度值
-			Ali_Publish("/sys/k0hfv4sYShN/PrinceIot_Device/thing/event/property/post", PUB_BUF1); 
-			timeCount_date = 0;
-		}
-		if(++timeCount >= 5000)									//发送间隔
-		{
-			AliNet_Ping();		//保活，否则可能会连接中断
-			timeCount=0; 
-		}
-	
+    range.MaxHumi = 60;
+    range.MaxSmoke = 200;
+    range.MaxTemp = 50;
+    range.MinHumi = 10;
+    range.MinTemp = 10;
+
+    currentVal.currentHumi = 0;
+    currentVal.currentSmoke = 0;
+    currentVal.currentTemp = 0;
+    currentVal.hasPerson = 0;
+    currentVal.isOpenPerson = 0;
+
+}
+//物联网控制函数，向服务器发送数据、接收互联网数据控制外设
+void net_task(void)
+{
+    timeCount++;
+    timeCount_date++;
+    if (timeCount_date % 25 == 0)
+    {
+        sprintf(PUB_BUF1, "{\"params\":{\"temp\":%d,\"humi\":%d,\"smoke\":%d, \"hasPerson\":%d},\"method\":\"thing.event.property.post\"}", currentVal.currentTemp, currentVal.currentHumi, currentVal.currentSmoke, currentVal.hasPerson);  //发布数据格式
+        //向服务器发布缓冲区PUB_BUF1信息，即发布湿度、温度值
+        Ali_Publish("/sys/k0hfv4sYShN/PrinceIot_Device/thing/event/property/post", PUB_BUF1);
+        timeCount_date = 0;
+    }
+    if (++timeCount >= 5000)                                //发送间隔
+    {
+        AliNet_Ping();      //保活，否则可能会连接中断
+        timeCount = 0;
+    }
 }
 
+// 显示数据页面
 void showMainPage(void)
 {
     OLED_Clear();
     uint8_t i;
-    for (i = 0; i < 2; i++)  OLED_ShowChinese(i * 16 + 5, 0, i, 16, 1); // �¶�
-    for (i = 0; i < 2; i++)  OLED_ShowChinese((i + 2) * 16 + 5 + 10, 0, i + 2, 16, 1); // ʪ��
-    for (i = 0; i < 2; i++)  OLED_ShowChinese((i + 4) * 16 + 5 + 20, 0, i + 4, 16, 1); //����
-    OLED_ShowChinese(5 + 16, 16, 10, 16, 1); // ���϶�
-    for (i = 0; i < 2; i++)  OLED_ShowChinese(i * 16 + 5, 16 * 2, i + 8, 16, 1); // ����
+    for (i = 0; i < 2; i++)  OLED_ShowChinese(i * 16 + 5, 0, i, 16, 1);
+    for (i = 0; i < 2; i++)  OLED_ShowChinese((i + 2) * 16 + 5 + 10, 0, i + 2, 16, 1);
+    for (i = 0; i < 2; i++)  OLED_ShowChinese((i + 4) * 16 + 5 + 20, 0, i + 4, 16, 1);
+    OLED_ShowChinese(5 + 16, 16, 10, 16, 1);
+    for (i = 0; i < 2; i++)  OLED_ShowChinese(i * 16 + 5, 16 * 2, i + 8, 16, 1);
     OLED_ShowString(5 + 16 * 2, 16 * 2, ": ", 16, 1);
     setSensorVal();
 }
+// 获取传感器信息
 void getSensorVal()
 {
-    DHT11_Read_Data(&currentTemp, &currentHumi);
-    // Serial_Printf("temp: %d", currentTemp);
-    //Serial_Printf("humi: %d", currentHumi);
+    DHT11_Read_Data(&currentVal.currentTemp, &currentVal.currentHumi);
     uint16_t adcx = Get_Adc_Average(ADC_Channel_9, 10);
-    currentSmoke = adcx * ((10000 - 300) / 4096) + 300;
-    hasPerson = SR501;
-
+    currentVal.currentSmoke = adcx * ((10000 - 300) / 4096) + 300;
+    currentVal.hasPerson = SR501;
 }
+
+// 页面切换+数据选中
 void setSensorVal(void)
 {
     if (setn == 1)
@@ -162,17 +173,15 @@ void setSensorVal(void)
         uint8_t i;
         char humiArr[4];
         char smokeArr[7];
-        OLED_ShowNum(5, 16, currentTemp, 2, 16, 1); // �¶�ֵ
-        sprintf(humiArr, "%d%%", currentHumi);
-        sprintf(smokeArr, "%dppm", currentSmoke);
-        //OLED_ShowNum(2*16+5+10,16,currentHumi,2,16,1);  // ʪ��ֵ
+        OLED_ShowNum(5, 16, currentVal.currentTemp, 2, 16, 1);
+        sprintf(humiArr, "%d%%", currentVal.currentHumi);
+        sprintf(smokeArr, "%dppm", currentVal.currentSmoke);
         OLED_ShowString(2 * 16 + 5 + 10, 16, (u8 *)humiArr, 16, 1);
-        OLED_ShowChinese(4 * 16 + 5 + 20 + 8, 16, isOpenPerson == 1 ? 6 : 7, 16, 1); //  �����⿪��
-        //OLED_ShowNum(5+16*3,16*2,currentSmoke,3,16,1); // ����ֵ
+        OLED_ShowChinese(4 * 16 + 5 + 20 + 8, 16, currentVal.isOpenPerson == 1 ? 6 : 7, 16, 1);
         OLED_ShowString(5 + 16 * 3, 16 * 2, (u8 *)smokeArr, 16, 1);
-        if (hasPerson && isOpenPerson)
+        if (currentVal.hasPerson && currentVal.isOpenPerson)
         {
-            for (i = 0; i < 4; i++)  OLED_ShowChinese(i * 16 + 5, 16 * 3, i + 11, 16, 1); // ��⵽��
+            for (i = 0; i < 4; i++)  OLED_ShowChinese(i * 16 + 5, 16 * 3, i + 11, 16, 1);
         }
         else
         {
@@ -181,42 +190,39 @@ void setSensorVal(void)
     }
     else if (setn == 2 || setn == 3)
     {
-
-        OLED_ShowNum(16 * 3 + 5, 16 + 8,  MaxTemp, 2, 16, setn - 2); // �¶�������ʾ
-        OLED_ShowNum(16 * 3 + 5, 16 * 2 + 8 + 8,  MinTemp, 2, 16,  setn - 3); // ������ʾ
+        OLED_ShowNum(16 * 3 + 5, 16 + 8,  range.MaxTemp, 2, 16, setn - 2);
+        OLED_ShowNum(16 * 3 + 5, 16 * 2 + 8 + 8,  range.MinTemp, 2, 16,  setn - 3);
     }
     else if (setn == 4 || setn == 5)
     {
-        OLED_ShowNum(16 * 3 + 5, 16 + 8,  MaxHumi, 2, 16, setn - 4); // ʪ��������ʾ
-        OLED_ShowNum(16 * 3 + 5, 16 * 2 + 8 + 8,  MinHumi, 2, 16, setn - 5); // ������ʾ
+        OLED_ShowNum(16 * 3 + 5, 16 + 8,  range.MaxHumi, 2, 16, setn - 4);
+        OLED_ShowNum(16 * 3 + 5, 16 * 2 + 8 + 8,  range.MinHumi, 2, 16, setn - 5);
     }
     else
     {
         char smokeStr[7];
-        sprintf(smokeStr, "%dppm", MaxSmoke); // ����+��λ
-        OLED_ShowString(16 * 3 + 5, 16  + 8, (u8 *)smokeStr,  16, 0); // ����������ʾ
+        sprintf(smokeStr, "%dppm", range.MaxSmoke);
+        OLED_ShowString(16 * 3 + 5, 16  + 8, (u8 *)smokeStr,  16, 0);
     }
-
 }
 
-
-// ��������ҳ�����Ĳ���
+// 显示数值
 void setSensorPage(SetTypeFontIndex type)
 {
     u8 i;
     OLED_Clear();
-    for (i = 0; i < 4; i++)OLED_ShowChinese(i * 16 + 32, 0, i + type, 16, 1); //��ʾ���ģ��������¶ȡ�ʪ�ȡ�������
-    for (i = 0; i < 2; i++)OLED_ShowChinese(i * 16 + 5, 16 + 8, i + 27, 16, 1); //��ʾ���ģ������ޡ�
+    for (i = 0; i < 4; i++)OLED_ShowChinese(i * 16 + 32, 0, i + type, 16, 1);
+    for (i = 0; i < 2; i++)OLED_ShowChinese(i * 16 + 5, 16 + 8, i + 27, 16, 1);
     OLED_ShowString(5 + 32, 16 + 8, (u8 *)": ", 16, 1);
     if (type != SENSOR_SMOKE)
     {
-        for (i = 0; i < 2; i++)OLED_ShowChinese(i * 16 + 5, 16 * 2 + 8 + 8, i + 29, 16, 1); //��ʾ���ģ������ޡ�
+        for (i = 0; i < 2; i++)OLED_ShowChinese(i * 16 + 5, 16 * 2 + 8 + 8, i + 29, 16, 1);
         OLED_ShowString(5 + 32, 16 * 2 + 8 + 8, (u8 *)": ", 16, 1);
     }
     if (type == SENSOR_TEMP)
     {
-        OLED_ShowChinese(5 + 16 * 4, 16 + 8, 10, 16, 1); // ��
-        OLED_ShowChinese(5 + 16 * 4,  16 * 2 + 8 + 8, 10, 16, 1); // ��
+        OLED_ShowChinese(5 + 16 * 4, 16 + 8, 10, 16, 1);
+        OLED_ShowChinese(5 + 16 * 4,  16 * 2 + 8 + 8, 10, 16, 1);
     }
     if (type == SENSOR_HUMI)
     {
@@ -224,13 +230,11 @@ void setSensorPage(SetTypeFontIndex type)
         OLED_ShowString(5 + 16 * 4,  16 * 2 + 8 + 8, (u8 *)"%", 16, 1); //%
     }
 }
-
-
+// 加减设置阈值
 uint8_t pageArr[6] = {NULL, SENSOR_TEMP, SENSOR_TEMP, SENSOR_HUMI, SENSOR_HUMI, SENSOR_SMOKE};
 void handleKeyClick()
 {
-
-    t = KEY_Scan(0);    //�õ���ֵ
+    t = KEY_Scan(0);
     if (t == KEY0_PRES)
     {
         setn++;
@@ -247,21 +251,19 @@ void handleKeyClick()
     if (t == KEY1_PRES || t == KEY2_PRES)
     {
 
-        if (setn == 2 && MaxTemp > 0)  t == KEY1_PRES ? MaxTemp++ : MaxTemp--; // �����¶�����
-        if (setn == 3 && MinTemp < MaxTemp)  t == KEY1_PRES ? MinTemp++ : MinTemp--; // �����¶�����
-        if (setn == 4 && MaxHumi)  t == KEY1_PRES ? MaxHumi++ : MaxHumi--; // ����ʪ������
-        if (setn == 5 && MinHumi < MaxHumi)  t == KEY1_PRES ? MinHumi++ : MinHumi--; // ����ʪ������
-        if (setn == 6 && MaxSmoke > 0)  t == KEY1_PRES ? MaxSmoke++ : MaxSmoke--; // ������������
+        if (setn == 2 && range.MaxTemp > 0)  t == KEY1_PRES ? range.MaxTemp++ : range.MaxTemp--; //
+        if (setn == 3 && range.MinTemp < range.MaxTemp)  t == KEY1_PRES ? range.MinTemp++ : range.MinTemp--; //
+        if (setn == 4 && range.MaxHumi)  t == KEY1_PRES ? range.MaxHumi++ : range.MaxHumi--;
+        if (setn == 5 && range.MinHumi < range.MaxHumi)  t == KEY1_PRES ? range.MinHumi++ : range.MinHumi--;
+        if (setn == 6 && range.MaxSmoke > 0)  t == KEY1_PRES ? range.MaxSmoke++ : range.MaxSmoke--;
     }
     if (t == KEY3_PRES)
     {
-
-        isOpenPerson = !isOpenPerson;
-
+        currentVal.isOpenPerson = !currentVal.isOpenPerson;
     }
     setSensorVal();
 }
-// ������ֵ��������
+// 超过阈值处理函数
 void handleAbnormal()
 {
     u8 i;
@@ -269,7 +271,7 @@ void handleAbnormal()
     static u8 isBlink = 1;
     isBlink = !isBlink;
     IsInRange judge = inRange();
-    if (count++ < 20) return;  // ��˸�����ʱ
+    if (count++ < 20) return;
     count = 0;
     // OLED
     (!judge.hasNoPerson || !judge.inMaxHumiRange || !judge.inMaxSmokeRange || !judge.inMaxTempRange || !judge.inMaxTempRange || !judge.inMinHumiRange) ? LED1_ON() : LED1_OFF();
@@ -282,35 +284,30 @@ void handleAbnormal()
     {
         Motor_SetSpeed(50);
     }
-
-    // *��˸
     OLED_ShowString(5 + 16 + 16, 16, ((!judge.inMaxTempRange || !judge.inMinTempRange) && isBlink) ? (u8 *)"*" : (u8 *)" ", 16, 1); //*
     OLED_ShowString(47 + 32, 16, ((!judge.inMaxHumiRange || !judge.inMinHumiRange) && isBlink) ? (u8 *)"*" : (u8 *)" ", 16, 1); //*
-    if (hasPerson && isBlink)
+	OLED_ShowString(47 + 64, 16*2, ((!judge.inMaxSmokeRange) && isBlink) ? (u8 *)"*" : (u8 *)" ", 16, 1); //*
+    if (currentVal.hasPerson && isBlink)
     {
-        for (i = 0; i < 4; i++)OLED_ShowChinese(i * 16 + 5, 3 * 16, i + 11, 16, 1) ; // ��⵽��
+        for (i = 0; i < 4; i++)OLED_ShowChinese(i * 16 + 5, 3 * 16, i + 11, 16, 1) ;
     }
     else
     {
-        OLED_ShowString(5, 3 * 16, (u8 *)"        ", 16, 1);  // ���
+        OLED_ShowString(5, 3 * 16, (u8 *)"        ", 16, 1);
     }
 }
-// ��ֵ�ж�
+// 是否在阈值范围内
 IsInRange inRange(void)
 {
     // c99
     IsInRange judge =
     {
-        .inMaxTempRange = currentTemp <= MaxTemp,
-        .inMinTempRange = currentTemp >= MinTemp,
-        .inMaxHumiRange = currentHumi <= MaxHumi,
-        .inMinHumiRange = currentHumi >= MinHumi,
-        .inMaxSmokeRange = currentSmoke <= MaxSmoke,
-        .hasNoPerson = !hasPerson
+        .inMaxTempRange = currentVal.currentTemp <= range.MaxTemp,
+        .inMinTempRange = currentVal.currentTemp >= range.MinTemp,
+        .inMaxHumiRange = currentVal.currentHumi <= range.MaxHumi,
+        .inMinHumiRange = currentVal.currentHumi >= range.MinHumi,
+        .inMaxSmokeRange = currentVal.currentSmoke <= range.MaxSmoke,
+        .hasNoPerson = !currentVal.hasPerson
     };
-
-    //  Serial_SendNumber(currentSmoke,3);
-    //  Serial_SendNumber(MaxSmoke,3);
     return judge;
 }
-
