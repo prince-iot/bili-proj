@@ -79,6 +79,8 @@ int main(void)
     Motor_Init();
 	usart3_init(115200);
 	ESP8266_Init();		
+	while(OneNet_DevLink())			//接入OneNET
+		delay_ms(500);
 	OneNet_Subscribe(devSubTopic, 1);	
     while (DHT11_Init()) {}
     while (1)
